@@ -78,8 +78,8 @@ Le **classement final** affiche la map révélée avec les scores.
 ## 🚀 Installation & Déploiement
 
 ### 1️⃣ Cloner le projet
-```git clone https://github.com/Jef-Ed/boom-bot
-cd Minesweeper-Multiplayer```
+```git clone https://github.com/Jef-Ed/boom-bot```
+```cd Minesweeper-Multiplayer```
 
 ### 2️⃣ Installer les dépendances
 ```pip install -r requirements.txt```
