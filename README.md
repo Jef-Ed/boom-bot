@@ -82,11 +82,11 @@ Le **classement final** affiche la map révélée avec les scores.
 - ```cd Minesweeper-Multiplayer```
 
 ### 2️⃣ Installer les dépendances
-```pip install -r requirements.txt```
+- ```pip install -r requirements.txt```
 
 ### 3️⃣ Configurer le bot Discord
 - Ajoutez votre token Discord dans un fichier de configuration config.yml.
 - Vérifiez que votre bot a les permissions pour lire et écrire dans les salons.
 
 ### 4️⃣ Lancer le bot
-```python boomBot.py```
+- ```python boomBot.py```
