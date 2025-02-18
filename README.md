@@ -78,15 +78,15 @@ Le **classement final** affiche la map révélée avec les scores.
 ## 🚀 Installation & Déploiement
 
 ### 1️⃣ Cloner le projet
-git clone https://github.com/Jef-Ed/boom-bot
-cd Minesweeper-Multiplayer
+```git clone https://github.com/Jef-Ed/boom-bot
+cd Minesweeper-Multiplayer```
 
 ### 2️⃣ Installer les dépendances
-pip install -r requirements.txt
+```pip install -r requirements.txt```
 
 ### 3️⃣ Configurer le bot Discord
 Ajoutez votre token Discord dans un fichier de configuration config.yml.
 Vérifiez que votre bot a les permissions pour lire et écrire dans les salons.
 
 ### 4️⃣ Lancer le bot
-python boomBot.py
+```python boomBot.py```
