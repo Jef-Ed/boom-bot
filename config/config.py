@@ -1,4 +1,5 @@
 import yaml
+from typing import Optional
 
 class Config:
     def __init__(self, config_path="config/config.yml"):

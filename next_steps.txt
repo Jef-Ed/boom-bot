@@ -1,0 +1,2 @@
+- check l. 200 boomBot pour fix la fin avec le classement
+- fix la logique de retrait des drapeaux : seulement si c'est le mien
