@@ -173,7 +173,6 @@ async def reveal_command(ctx, case: str):
         await ctx.send(f"{ctx.author.mention} est éliminé !")
         remove_player_from_game(data, ctx.author)
 
-    await display_map_in_chunks(ctx, game, data)
     ended = await check_end_game(ctx, data, last_click=(row, col), bomb_clicked=bomb_clicked, safe_flag_clicked=False)
     if ended:
         scenario_is_one_left = await which_end_game(ctx, data, last_click=(row,col), bomb_clicked=False, safe_flag_clicked=False)
@@ -192,8 +191,9 @@ async def reveal_command(ctx, case: str):
             await ctx.send(final_msg[2])
             games_in_progress.pop(ctx.channel.id, None)
             return
-
-    # Coup valide => on passe le tour
+        
+    await display_map_in_chunks(ctx, game, data)
+    
     data["current_player_index"] = (data["current_player_index"] + 1) % len(data["turn_order"])
     next_player = data["turn_order"][data["current_player_index"]]
     await ctx.send(f"Tour de {next_player.mention}.")
@@ -232,7 +232,6 @@ async def flag_command(ctx, case: str):
         return
 
     await ctx.send(f"{ctx.author.mention} : {msg}")
-    await display_map_in_chunks(ctx, game, data)
 
     ended = await check_end_game(ctx, data, last_click=(row,col), bomb_clicked=False, safe_flag_clicked=False)
     if ended:
@@ -252,6 +251,8 @@ async def flag_command(ctx, case: str):
             await ctx.send(final_msg[2])
             games_in_progress.pop(ctx.channel.id, None)
             return
+    
+    await display_map_in_chunks(ctx, game, data)
 
     data["current_player_index"] = (i_current + 1) % len(data["turn_order"])
     next_player = data["turn_order"][data["current_player_index"]]

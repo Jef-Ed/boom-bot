@@ -133,7 +133,7 @@ class MinesweeperGame:
 
     def reveal_all_bombs(self):
         for v in self.board.values():
-            if v["value"] == 'b':
+            if v["value"] == 'b' and v["status"] != "flagged":
                 v["status"] = "revealed"
 
     def count_all_flags(self):
