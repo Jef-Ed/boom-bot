@@ -15,24 +15,9 @@ def remove_player_from_game(data, member):
         if turn_order:
             data["current_player_index"] %= len(turn_order)
 
-def end_game_if_needed(ctx, data) -> bool:
-    turn_order = data["turn_order"]
-    if len(turn_order) == 0:
-        ctx.send("Plus aucun joueur en jeu, partie terminée !")
-        end_game_with_ranking(ctx, data, completed_map=False)
-        return True
-    if len(turn_order) == 1:
-        winner = turn_order[0]
-        ctx.send(f"{winner.mention} est le dernier survivant ! Partie terminée.")
-        end_game_with_ranking(ctx, data, completed_map=False)
-        return True
-    return False
-
 def convert_case_to_coords(case: str) -> tuple[int, int]:
     case = case.strip().upper()
-    col_part = ""
-    row_part = ""
-
+    col_part, row_part = "", ""
     for char in case:
         if char.isalpha():
             col_part += char
@@ -48,37 +33,77 @@ def convert_case_to_coords(case: str) -> tuple[int, int]:
     col -= 1
 
     row = int(row_part) - 1
-    return row, col
+    return (row, col)
 
-def end_game_with_ranking(ctx, data, completed_map: bool):
+async def check_end_game(ctx, data, last_click=None, bomb_clicked=False, safe_flag_clicked=False):
+    """
+    Si len(turn_order)==1 => partie finie (one_left).
+    Si game.is_all_safe_revealed() => partie finie (all_solved).
+    """
+    turn_order = data["turn_order"]
+    game = data["game"]
+    if len(turn_order) == 1 or game.is_all_safe_revealed():
+        return True
+    return False
+
+async def which_end_game(ctx, data, last_click=None, bomb_clicked=False, safe_flag_clicked=False):
+    """
+    Renvoie True si c'est one_left, False si c'est all_solved.
+    """
+    turn_order = data["turn_order"]
+    game = data["game"]
+    if len(turn_order) == 1:
+        return True  # scenario 'one_left'
+    elif game.is_all_safe_revealed():
+        return False  # scenario 'all_solved'
+
+async def finalize_and_rank(ctx, data, scenario, last_click=None, bomb_clicked=False, safe_flag_clicked=False):
+    """
+    Modifie la map finale (header, bomb_e, flag_e, etc.) selon scenario,
+    puis construit un classement.
+    Retourne la liste de lignes (strings) à envoyer.
+    """
     game = data["game"]
     turn_order = data["turn_order"]
     elimination_order = data["elimination_order"]
 
-    game.force_reveal_all()
-    board_text = game.print_board_text()
+    final_map = game.finalize_endgame(
+        scenario,
+        last_click=last_click,
+        bomb_clicked=bomb_clicked,
+        safe_flag_clicked=safe_flag_clicked
+    )
 
+    # Construire le classement
+    # Survivants => tri desc par nb bombes drapeau-tisées
     survivors = list(turn_order)
-    eliminated = list(elimination_order)
+    survivors.sort(key=lambda p: game.count_flags_by_user(p.id), reverse=True)
+    
+    # On réunit ensuite les éliminés dans l'ordre
     ranking_list = []
+    for p in survivors:
+        sc = game.count_flags_by_user(p.id)
+        ranking_list.append((p, sc, False))
+    for e in elimination_order:
+        sc = game.count_flags_by_user(e.id)
+        ranking_list.append((e, sc, True))
 
-    for player in survivors:
-        score = game.count_flags_by_user(player.id)
-        ranking_list.append((player, score, False))
+    lines = []
+    if scenario == 'all_solved':
+        lines.append("**Fin de partie : puzzle complété !**")
+    elif len(survivors) == 1:
+        winner = survivors[0]
+        lines.append(f"{winner.mention} est le dernier survivant ! Fin de partie.")
+    else:
+        lines.append(f"C'est quoi ce scenario de Fin de partie ?")
 
-    for player in reversed(eliminated):
-        score = game.count_flags_by_user(player.id)
-        ranking_list.append((player, score, True))
+    lines.append(final_map)
 
-    msg_lines = ["**Fin de partie !**", "Carte révélée :"]
-    msg_lines.append(board_text)
-
-    msg_lines.append("**Classement final :**")
     pos = 1
-    for (player, score, elim) in ranking_list:
-        status = "(Éliminé)" if elim else "(Survivant)"
-        msg_lines.append(f"{pos}. {player.display_name} {status} - Bombes drapeau-tisées: {score}")
+    for (pl, sc, elim) in ranking_list:
+        st = "(Éliminé)" if elim else "(Survivant)"
+        lines.append(f"{pos}. {pl.display_name} {st} - Bombes drapeau-tisées: {sc}")
         pos += 1
 
-    ctx.send("\n".join(msg_lines))
     data["game"] = None
+    return lines

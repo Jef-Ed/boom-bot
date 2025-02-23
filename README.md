@@ -41,18 +41,6 @@ Le **classement final** affiche la map révélée avec les scores.
 
 ---
 
-## 🛠️ Fonctionnement technique
-
-### 📍 État des cases
-- 🔳 **Hidden** : Case non révélée.
-- ❓ **Clicked** : Case révélée.
-- 🚩 **Flagged** : Case marquée d’un drapeau.
-
-### 🎲 Contenu possible des cases
-- "e" (empty) : Case vide.
-- "1"..."8" : Nombre de bombes adjacentes.
-- "💣" : Bombe.
-
 ### 🏁 Déroulement d’une partie
 1. Un joueur démarre une partie avec `!boom @player1 @player2`.
 2. Les joueurs jouent à tour de rôle.
@@ -70,8 +58,8 @@ Le **classement final** affiche la map révélée avec les scores.
 ✅ **Compteur de bombes restantes** (`total_bombes - drapeaux_posés`)
 
 ### 🚀 Optimisations possibles
-- 🛠 **Amélioration de l'affichage** : Correction du décalage visuel des lignes avec les drapeaux/bombes.
-- 🎮 **Jouabilité** : Réfléchir à un système pour jouer avec une seule map cliquable.
+- Gérer le cas où on flag une case vide qui est reveal avec le flood_real, que pasà ?
+- **End Game** remplacement de la case qui a fait perdre un joueur par la version _e de l'emoji
 
 ---
 

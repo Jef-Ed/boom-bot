@@ -1,5 +1,3 @@
-# emojis.py
-
 EMOJI_CASES = {
     "0" : "<:empty:1342839900797407324>",
     "1" : "<:01:1342839880518209636>",
@@ -34,8 +32,7 @@ EMOJI_HEADER = {
     13 : ":regional_indicator_m:",
     14 : ":regional_indicator_n:",
     15 : ":regional_indicator_o:",
-    16 : ":regional_indicator_p:",
-    17 : "<:sad_boom:1342861218255208468>"
+    16 : ":regional_indicator_p:"
 }
 
 EMOJI_LINES = {
@@ -55,4 +52,11 @@ EMOJI_LINES = {
     14 : "<:14:1342862506124775484>",
     15 : "<:15:1342862507441913867>",
     16 : "<:16:1342862509123702825>"
+}
+
+EMOJIS_ENDGAME = {
+    0 : "<:sad_boom:1342861218255208468>",
+    1 : "<:swag_boom:1342917222200508556>",
+    2 : "<:flag_e:1342839905159483402>",
+    3 : "<:bomb_e:1342839899493236746>"
 }
