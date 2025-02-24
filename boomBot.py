@@ -134,24 +134,10 @@ async def reveal_command(ctx, case: str):
                 else:
                     await ctx.send(f"{action_msg}\nDrapeau orphelin ? Personne n'est éliminé.")
 
-            ended = await check_end_game(ctx, data, last_click=(row, col), bomb_clicked=bomb_clicked, safe_flag_clicked=(not bomb_clicked))
+            ended, scenario = await check_end_game(ctx, data, last_click=(row, col), bomb_clicked=bomb_clicked, safe_flag_clicked=(not bomb_clicked))
             if ended:
-                scenario_is_one_left = await which_end_game(ctx, data, last_click=(row,col), bomb_clicked=False, safe_flag_clicked=False)
-                if scenario_is_one_left:
-                    final_msg = await finalize_and_rank(ctx, data, scenario='one_left',
-                        last_click=(row,col), bomb_clicked=False, safe_flag_clicked=False)
-                    await ctx.send(final_msg[0])
-                    await send_map_in_chunks(ctx, final_msg[1], game.bomb_count)
-                    await ctx.send(final_msg[2])
-                    games_in_progress.pop(ctx.channel.id, None)
-                    return
-                else:
-                    final_msg = await finalize_and_rank(ctx, data, scenario='all_solved')
-                    await ctx.send(final_msg[0])
-                    await send_map_in_chunks(ctx, final_msg[1], game.bomb_count)
-                    await ctx.send(final_msg[2])
-                    games_in_progress.pop(ctx.channel.id, None)
-                    return
+                await handle_end_of_game(ctx, data, row, col, bomb_clicked=bomb_clicked, safe_flag_clicked=(not bomb_clicked), scenario=scenario)
+                return
 
             await display_map_in_chunks(ctx, game, data)
             data["current_player_index"] %= len(data["turn_order"])
@@ -173,24 +159,10 @@ async def reveal_command(ctx, case: str):
         await ctx.send(f"{ctx.author.mention} est éliminé !")
         remove_player_from_game(data, ctx.author)
 
-    ended = await check_end_game(ctx, data, last_click=(row, col), bomb_clicked=bomb_clicked, safe_flag_clicked=False)
+    ended, scenario = await check_end_game(ctx, data, last_click=(row, col), bomb_clicked=bomb_clicked, safe_flag_clicked=False)
     if ended:
-        scenario_is_one_left = await which_end_game(ctx, data, last_click=(row,col), bomb_clicked=False, safe_flag_clicked=False)
-        if scenario_is_one_left:
-            final_msg = await finalize_and_rank(ctx, data, scenario='one_left',
-                last_click=(row,col), bomb_clicked=False, safe_flag_clicked=False)
-            await ctx.send(final_msg[0])
-            await send_map_in_chunks(ctx, final_msg[1], game.bomb_count)
-            await ctx.send(final_msg[2])
-            games_in_progress.pop(ctx.channel.id, None)
-            return
-        else:
-            final_msg = await finalize_and_rank(ctx, data, scenario='all_solved')
-            await ctx.send(final_msg[0])
-            await send_map_in_chunks(ctx, final_msg[1], game.bomb_count)
-            await ctx.send(final_msg[2])
-            games_in_progress.pop(ctx.channel.id, None)
-            return
+        await handle_end_of_game(ctx, data, row, col, bomb_clicked=bomb_clicked, safe_flag_clicked=False, scenario=scenario)
+        return
         
     await display_map_in_chunks(ctx, game, data)
     
@@ -232,32 +204,17 @@ async def flag_command(ctx, case: str):
         return
 
     await ctx.send(f"{ctx.author.mention} : {msg}")
-
-    ended = await check_end_game(ctx, data, last_click=(row,col), bomb_clicked=False, safe_flag_clicked=False)
-    if ended:
-        scenario_is_one_left = await which_end_game(ctx, data, last_click=(row,col), bomb_clicked=False, safe_flag_clicked=False)
-        if scenario_is_one_left:
-            final_msg = await finalize_and_rank(ctx, data, scenario='one_left',
-                last_click=(row,col), bomb_clicked=False, safe_flag_clicked=False)
-            await ctx.send(final_msg[0])
-            await send_map_in_chunks(ctx, final_msg[1], game.bomb_count)
-            await ctx.send(final_msg[2])
-            games_in_progress.pop(ctx.channel.id, None)
-            return
-        else:
-            final_msg = await finalize_and_rank(ctx, data, scenario='all_solved')
-            await ctx.send(final_msg[0])
-            await send_map_in_chunks(ctx, final_msg[1], game.bomb_count)
-            await ctx.send(final_msg[2])
-            games_in_progress.pop(ctx.channel.id, None)
-            return
     
+    ended, scenario = await check_end_game(ctx, data, last_click=(row, col), bomb_clicked=False, safe_flag_clicked=False)
+    if ended:
+        await handle_end_of_game(ctx, data, row, col, bomb_clicked=False, safe_flag_clicked=False, scenario=scenario)
+        return
+
     await display_map_in_chunks(ctx, game, data)
 
     data["current_player_index"] = (i_current + 1) % len(data["turn_order"])
     next_player = data["turn_order"][data["current_player_index"]]
     await ctx.send(f"Tour de {next_player.mention}.")
-
 
 async def display_map_in_chunks(ctx, game, data):
     board_text = game.print_board_text()
@@ -273,6 +230,24 @@ async def send_map_in_chunks(ctx, board_text: str, bombs_left: int):
     await ctx.send("\n".join(chunk1))
     await ctx.send("\n".join(chunk2))
     await ctx.send(f"{"\n".join(chunk3)}\n\nBombes restantes: {bombs_left}")
+
+async def handle_end_of_game(ctx, data, row, col, bomb_clicked=False, safe_flag_clicked=False, scenario=None):
+    """
+    Gère la fin de partie en affichant la map et le classement.
+    """
+    game = data["game"]
+    bomb_count = game.bomb_count
+
+    final_msg = await finalize_and_rank(ctx, data, scenario=scenario,
+                                        last_click=(row, col),
+                                        bomb_clicked=bomb_clicked,
+                                        safe_flag_clicked=safe_flag_clicked)
+    
+    await ctx.send(final_msg[0])
+    await send_map_in_chunks(ctx, final_msg[1], bomb_count)
+    await ctx.send(final_msg[2])
+
+    games_in_progress.pop(ctx.channel.id, None)
 
 
 if __name__ == "__main__":

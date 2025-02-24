@@ -36,26 +36,15 @@ def convert_case_to_coords(case: str) -> tuple[int, int]:
     return (row, col)
 
 async def check_end_game(ctx, data, last_click=None, bomb_clicked=False, safe_flag_clicked=False):
-    """
-    Si len(turn_order)==1 => partie finie (one_left).
-    Si game.is_all_safe_revealed() => partie finie (all_solved).
-    """
     turn_order = data["turn_order"]
     game = data["game"]
-    if len(turn_order) == 1 or game.is_all_safe_revealed():
-        return True
-    return False
 
-async def which_end_game(ctx, data, last_click=None, bomb_clicked=False, safe_flag_clicked=False):
-    """
-    Renvoie True si c'est one_left, False si c'est all_solved.
-    """
-    turn_order = data["turn_order"]
-    game = data["game"]
     if len(turn_order) == 1:
-        return True  # scenario 'one_left'
+        return True, "one_left"
     elif game.is_all_safe_revealed():
-        return False  # scenario 'all_solved'
+        return True, "all_solved"
+    
+    return False, None
 
 async def finalize_and_rank(ctx, data, scenario, last_click=None, bomb_clicked=False, safe_flag_clicked=False):
     """
