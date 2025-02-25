@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
-from discord.user import User
-from discord.member import Member
 from typing import Optional
 import random
 from config.config import Config
@@ -61,10 +59,8 @@ async def boom_command(ctx: Context, *args):
         await ctx.send("Maximum 4 joueurs.")
         return
 
-    # Création de la partie
     new_game = MinesweeperGame(size=12, bomb_count=22)
     channel_id = ctx.channel.id
-
     turn_order = list(mentioned_players)
     random.shuffle(turn_order)
 
@@ -79,10 +75,9 @@ async def boom_command(ctx: Context, *args):
     await ctx.send(
         f"Nouvelle partie avec {', '.join(p.mention for p in turn_order)}!\n"
         f"Tour de {first_player.mention}.\n"
-        "Utilisez `!r <Case>` pour révéler, `!f <Case>` pour poser un drapeau.\n"
+        "Utilisez `!r A1` pour révéler, `!f A1` pour poser un drapeau.\n"
     )
 
-    # Affichage initial
     board_text = new_game.print_board_text()
     bombs_left = new_game.bomb_count - new_game.count_all_flags()
     await send_map_in_chunks(ctx, board_text, bombs_left)
@@ -97,19 +92,13 @@ async def reveal_command(ctx: Context, case: str):
 
     data = games_in_progress[channel_id]
     game = data["game"]
-    turn_order = data["turn_order"]
-    i_current = data["current_player_index"]
-    current_player = turn_order[i_current]
-
-    if ctx.author != current_player:
-        await ctx.send("Ce n'est pas ton tour.")
+    
+    error_msg, row, col = validate_move(ctx, data, case)
+    if error_msg or row is None or col is None:
+        if error_msg:
+            await ctx.send(error_msg)
         return
-
-    row, col = convert_case_to_coords(case)
-    if not game.is_valid_coords(row, col):
-        await ctx.send("Coup interdit (hors de la grille). Réessayez.")
-        return
-
+    
     cell = game.board[(row, col)]
     action_msg = f"{ctx.author.mention} a révélé la case {case}."
 
@@ -127,7 +116,7 @@ async def reveal_command(ctx: Context, case: str):
                 remove_player_from_game(data, ctx.author)
             else:
                 owner_id = cell["flag_owner"]
-                loser_member = find_member_by_id(turn_order, owner_id)
+                loser_member = find_member_by_id(data["turn_order"], owner_id)
                 if loser_member:
                     await ctx.send(f"{action_msg}\nDrapeau sans bombe ! {loser_member.mention} est éliminé.")
                     remove_player_from_game(data, loser_member)
@@ -161,14 +150,14 @@ async def reveal_command(ctx: Context, case: str):
 
     ended, scenario = await check_end_game(data)
     if ended:
-        await handle_end_of_game(ctx, data, row, col, bomb_clicked=bomb_clicked, safe_flag_clicked=False, scenario=scenario)
+        await handle_end_of_game(ctx, data, row, col,
+                                 bomb_clicked=bomb_clicked,
+                                 safe_flag_clicked=(not bomb_clicked),
+                                 scenario=scenario)
         return
         
     await display_map_in_chunks(ctx, game)
-    
-    data["current_player_index"] = (data["current_player_index"] + 1) % len(data["turn_order"])
-    next_player: User | Member = data["turn_order"][data["current_player_index"]]
-    await ctx.send(f"Tour de {next_player.mention}.")
+    await pass_to_next_player(ctx, data)
 
 
 @bot.command(name="f")
@@ -180,21 +169,10 @@ async def flag_command(ctx: Context, case: str):
 
     data = games_in_progress[channel_id]
     game = data["game"]
-    turn_order = data["turn_order"]
-    i_current = data["current_player_index"]
-    current_player = turn_order[i_current]
-
-    if ctx.author != current_player:
-        await ctx.send("Ce n'est pas ton tour.")
-        return
-
-    if not game.first_click_done:
-        await ctx.send("Pas de drapeau avant la première révélation. Réessayez.")
-        return
-
-    row, col = convert_case_to_coords(case)
-    if not game.is_valid_coords(row, col):
-        await ctx.send("Coup interdit (hors grille). Réessayez.")
+    
+    error_msg, row, col = validate_move(ctx, data, case, is_flag=True)
+    if error_msg:
+        await ctx.send(error_msg)
         return
 
     msg = game.flag_case(row, col, ctx.author.id)
@@ -202,40 +180,24 @@ async def flag_command(ctx: Context, case: str):
         await ctx.send(msg + " (coup interdit, rejouez).")
         await display_map_in_chunks(ctx, game)
         return
-
-    await ctx.send(f"{ctx.author.mention} : {msg}")
     
     ended, scenario = await check_end_game(data)
     if ended:
-        await handle_end_of_game(ctx, data, row, col, bomb_clicked=False, safe_flag_clicked=False, scenario=scenario)
+        await handle_end_of_game(ctx, data, row, col,
+                                 bomb_clicked=False,
+                                 safe_flag_clicked=False,
+                                 scenario=scenario)
         return
 
+    await ctx.send(f"{ctx.author.mention} : {msg}")
     await display_map_in_chunks(ctx, game)
+    await pass_to_next_player(ctx, data)
 
-    data["current_player_index"] = (i_current + 1) % len(data["turn_order"])
-    next_player: User | Member = data["turn_order"][data["current_player_index"]]
-    await ctx.send(f"Tour de {next_player.mention}.")
-
-async def display_map_in_chunks(ctx: Context, game: MinesweeperGame):
-    board_text = game.print_board_text()
-    bombs_left = game.bomb_count - game.count_all_flags()
-    await send_map_in_chunks(ctx, board_text, bombs_left)
-
-async def send_map_in_chunks(ctx: Context, board_text: str, bombs_left: int):
-    lines = board_text.split("\n")
-    chunk1 = lines[0:5]
-    chunk2 = lines[5:9]
-    chunk3 = lines[9:13]
-
-    await ctx.send("\n".join(chunk1))
-    await ctx.send("\n".join(chunk2))
-    await ctx.send(f"{"\n".join(chunk3)}\n\nBombes restantes: {bombs_left}")
-
-async def handle_end_of_game(ctx: Context, data, row, col, bomb_clicked=False, safe_flag_clicked=False, scenario=None):
+async def handle_end_of_game(ctx: Context, data: GameData, row, col, bomb_clicked, safe_flag_clicked, scenario):
     """
     Gère la fin de partie en affichant la map et le classement.
     """
-    game: MinesweeperGame = data["game"]
+    game = data["game"]
     bomb_count = game.bomb_count
 
     final_msg = await finalize_and_rank(data, scenario=scenario,

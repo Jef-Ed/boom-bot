@@ -53,13 +53,17 @@ Le **classement final** affiche la map révélée avec les scores.
 
 ## 🐞 Bugs & Optimisations
 
-### 🔧 Corrections implémentées
-✅ **Révéler toute la map et afficher un classement en fin de partie**  
-✅ **Compteur de bombes restantes** (`total_bombes - drapeaux_posés`)
+### 🔧 Corrections à faire sur le *End Game*
+❌ **Optimiser le classement en fin de partie**  Prendre en compte les éliminés et faire un vrai ranking
+❌ **Compteur de bombes restantes** Non fonctionnel en fin de partie
+❌ **Bug map completed** voir screenshot ajouté
 
 ### 🚀 Optimisations possibles
 - Gérer le cas où on flag une case vide qui est reveal avec le flood_real, que pasà ?
-- **End Game** remplacement de la case qui a fait perdre un joueur par la version _e de l'emoji
+- Créer une map test avec tous les scenarios
+- Docker avec Paour pour le déploiement
+- Move `handle_end_of_game` to utils.py
+- Merge end games functions
 
 ---
 

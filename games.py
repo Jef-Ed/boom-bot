@@ -1,6 +1,6 @@
 import random
 from collections import deque
-from typing import Optional, TypedDict
+from typing import TypedDict
 from emojis import EMOJI_CASES, EMOJI_LINES, EMOJI_HEADER, EMOJIS_ENDGAME
 
 class MinesweeperGame:
