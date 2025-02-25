@@ -1,10 +1,16 @@
-def find_member_by_id(members, member_id):
+from discord.user import User
+from discord.member import Member
+from discord.ext.commands import Context
+from typing import Optional
+from games import MinesweeperGame, GameData
+
+def find_member_by_id(members: list[User | Member], member_id) -> Optional[User | Member]:
     for member in members:
         if member.id == member_id:
             return member
     return None
 
-def remove_player_from_game(data, member):
+def remove_player_from_game(data: GameData, member: User | Member):
     turn_order = data["turn_order"]
     if member in turn_order:
         idx = turn_order.index(member)
@@ -35,9 +41,9 @@ def convert_case_to_coords(case: str) -> tuple[int, int]:
     row = int(row_part) - 1
     return (row, col)
 
-async def check_end_game(ctx, data, last_click=None, bomb_clicked=False, safe_flag_clicked=False):
+async def check_end_game(data) -> tuple[bool, Optional[str]]:
     turn_order = data["turn_order"]
-    game = data["game"]
+    game: MinesweeperGame = data["game"]
 
     if len(turn_order) == 1:
         return True, "one_left"
@@ -46,13 +52,13 @@ async def check_end_game(ctx, data, last_click=None, bomb_clicked=False, safe_fl
     
     return False, None
 
-async def finalize_and_rank(ctx, data, scenario, last_click=None, bomb_clicked=False, safe_flag_clicked=False):
+async def finalize_and_rank(data: GameData, scenario: Optional[str], last_click=None, bomb_clicked=False, safe_flag_clicked=False) -> list[str]:
     """
     Modifie la map finale (header, bomb_e, flag_e, etc.) selon scenario,
     puis construit un classement.
     Retourne la liste de lignes (strings) à envoyer.
     """
-    game = data["game"]
+    game: MinesweeperGame = data["game"]
     turn_order = data["turn_order"]
     elimination_order = data["elimination_order"]
 
@@ -81,7 +87,7 @@ async def finalize_and_rank(ctx, data, scenario, last_click=None, bomb_clicked=F
     if scenario == 'all_solved':
         lines.append("**Fin de partie : puzzle complété !**")
     elif len(survivors) == 1:
-        winner = survivors[0]
+        winner: User | Member = survivors[0]
         lines.append(f"{winner.mention} est le dernier survivant ! Fin de partie.")
     else:
         lines.append(f"C'est quoi ce scenario de Fin de partie ?")
@@ -89,10 +95,9 @@ async def finalize_and_rank(ctx, data, scenario, last_click=None, bomb_clicked=F
     lines.append(final_map)
 
     pos = 1
-    for (pl, sc, elim) in ranking_list:
+    for (player, sc, elim) in ranking_list:
         st = "(Éliminé)" if elim else "(Survivant)"
-        lines.append(f"{pos}. {pl.display_name} {st} - Bombes drapeau-tisées: {sc}")
+        lines.append(f"{pos}. {player.display_name} {st} - Bombes drapeau-tisées: {sc}")
         pos += 1
 
-    data["game"] = None
     return lines

@@ -1,5 +1,6 @@
 import random
 from collections import deque
+from typing import Optional, TypedDict
 from emojis import EMOJI_CASES, EMOJI_LINES, EMOJI_HEADER, EMOJIS_ENDGAME
 
 class MinesweeperGame:
@@ -11,7 +12,7 @@ class MinesweeperGame:
         self.initialize_board()
         self.header = [EMOJI_HEADER[i] for i in range(self.size + 1)]
 
-    def initialize_board(self):
+    def initialize_board(self) -> None:
         self.board = {
             (r, c): {
                 "value": 0,
@@ -22,7 +23,7 @@ class MinesweeperGame:
             for c in range(self.size)
         }
 
-    def generate_bombs(self, first_click_coords):
+    def generate_bombs(self, first_click_coords) -> None:
         excluded_coords = set()
         directions = [
             (-1, -1), (-1, 0), (-1, 1),
@@ -48,7 +49,7 @@ class MinesweeperGame:
             if cell["value"] != 'b':
                 cell["value"] = self.count_adjacent_bombs(r, c)
 
-    def count_adjacent_bombs(self, r, c):
+    def count_adjacent_bombs(self, r, c) -> int:
         directions = [
             (-1, -1), (-1, 0), (-1, 1),
             (0, -1),           (0, 1),
@@ -62,10 +63,10 @@ class MinesweeperGame:
                     cnt += 1
         return cnt
 
-    def is_valid_coords(self, r, c):
+    def is_valid_coords(self, r, c) -> bool:
         return 0 <= r < self.size and 0 <= c < self.size
 
-    def reveal_case(self, r, c):
+    def reveal_case(self, r, c) -> str:
         cell = self.board[(r, c)]
         if cell["status"] == "revealed":
             return "Cette case est déjà révélée."
@@ -84,7 +85,7 @@ class MinesweeperGame:
             return "Case vide. Révélation autour."
         return f"La case contient {cell['value']}."
 
-    def flood_reveal(self, sr, sc):
+    def flood_reveal(self, sr, sc) -> None:
         queue = deque()
         queue.append((sr, sc))
         while queue:
@@ -102,7 +103,7 @@ class MinesweeperGame:
                         if neigh["value"] == 0:
                             queue.append((nr, nc))
 
-    def flag_case(self, r, c, user_id):
+    def flag_case(self, r, c, user_id) -> str:
         if not self.is_valid_coords(r, c):
             return "La case est hors de la grille."
         cell = self.board[(r, c)]
@@ -115,7 +116,7 @@ class MinesweeperGame:
         cell["flag_owner"] = user_id
         return "Drapeau placé."
 
-    def is_all_safe_revealed(self):
+    def is_all_safe_revealed(self) -> bool:
         """
         True si toutes les cases non-bombes sont révélées ou flaggées
         ET le total de drapeaux n'excède pas le bomb_count.
@@ -131,22 +132,22 @@ class MinesweeperGame:
             safe_ok = False
         return safe_ok
 
-    def reveal_all_bombs(self):
+    def reveal_all_bombs(self) -> None:
         for v in self.board.values():
             if v["value"] == 'b' and v["status"] != "flagged":
                 v["status"] = "revealed"
 
-    def count_all_flags(self):
+    def count_all_flags(self) -> int:
         return sum(1 for v in self.board.values() if v["status"] == "flagged")
 
-    def count_flags_by_user(self, user_id):
+    def count_flags_by_user(self, user_id) -> int:
         cnt = 0
         for v in self.board.values():
             if v["status"] == "flagged" and v["flag_owner"] == user_id and v["value"] == 'b':
                 cnt += 1
         return cnt
 
-    def finalize_endgame(self, scenario, last_click=None, bomb_clicked=False, safe_flag_clicked=False):
+    def finalize_endgame(self, scenario, last_click=None, bomb_clicked=False, safe_flag_clicked=False) -> str:
         """
         Gère la fin de partie :
         - On remplace le header[0] selon scenario :
@@ -176,7 +177,7 @@ class MinesweeperGame:
 
         return self.print_board_text()
 
-    def print_board_text(self):
+    def print_board_text(self) -> str:
         lines = []
 
         lines.append("".join(self.header))
@@ -206,3 +207,9 @@ class MinesweeperGame:
             lines.append("".join(row_parts))
 
         return "\n".join(lines)
+    
+class GameData(TypedDict):
+    game: MinesweeperGame
+    turn_order: list
+    current_player_index: int
+    elimination_order: list
