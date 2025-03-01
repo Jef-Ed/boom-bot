@@ -54,12 +54,12 @@ Le **classement final** affiche la map révélée avec les scores.
 ## 🐞 Bugs & Optimisations
 
 ### 🔧 Corrections à faire sur le *End Game*
-❌ **Optimiser le classement en fin de partie**  Prendre en compte les éliminés et faire un vrai ranking
-❌ **Compteur de bombes restantes** Non fonctionnel en fin de partie
-❌ **Bug map completed** voir screenshot ajouté
+- ❌ **Optimiser le classement en fin de partie**  Prendre en compte les éliminés et faire un vrai ranking
+- ❌ **Compteur de bombes restantes** Non fonctionnel en fin de partie
+- ❌ **Bug map completed** voir screenshot ajouté
 
 ### 🚀 Optimisations possibles
-- Gérer le cas où on flag une case vide qui est reveal avec le flood_real, que pasà ?
+- Gérer le cas où on flag une case vide qui est reveal avec le flood_reveal, que pasà ?
 - Créer une map test avec tous les scenarios
 - Docker avec Paour pour le déploiement
 - Move `handle_end_of_game` to utils.py
@@ -71,14 +71,15 @@ Le **classement final** affiche la map révélée avec les scores.
 
 ### 1️⃣ Cloner le projet
 - ```git clone https://github.com/Jef-Ed/boom-bot```
-- ```cd Minesweeper-Multiplayer```
+- ```cd boom-bot```
 
 ### 2️⃣ Installer les dépendances
 - ```pip install -r requirements.txt```
 
 ### 3️⃣ Configurer le bot Discord
-- Ajoutez votre token Discord dans un fichier de configuration config.yml.
+- Créer un bot Discord avec les bon rôles et droits depuis la plateforme développeur de Discord.
 - Vérifiez que votre bot a les permissions pour lire et écrire dans les salons.
+- Ajoutez votre token Discord dans un fichier de configuration config.yml.
 
 ### 4️⃣ Lancer le bot
 - ```python boomBot.py```
